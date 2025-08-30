@@ -1,0 +1,31 @@
+[build-system]
+requires = []
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bad"
+version = "0.1.0"
+description = "A Box-and-Arrow Diagram generation tool"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+keywords = ["bad", "diagram", "schematic", "box-and-arrow"]
+authors = [
+  { name = "Louis Duret-Robert", email = "louisduret@gmail.com" }
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.scripts]
+bad = "bad:main"
+
+[project.urls]
+"Homepage" = "https://github.com/Louis-DR/bad-diagram"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bad*"]
+exclude = ["examples*"]
