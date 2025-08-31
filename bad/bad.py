@@ -44,8 +44,8 @@ class Vector2:
 class Element:
   """Base class for all schematic elements"""
   def __init__(self,
-               id     : str | int | None = None,
-               parent : Self      | None = None):
+               id     : str  | None = None,
+               parent : Self | None = None):
     self.id     = id
     self.parent = parent
   def draw(self) -> str:
@@ -56,9 +56,9 @@ class Element:
 class LocatedElement(Element):
   """Base class for schematic with a position"""
   def __init__(self,
-               id       : str | int | None = None,
-               parent   : Element   | None = None,
-               position : Vector2          = Vector2(0,0)):
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = Vector2(0,0)):
     Element.__init__(self, id, parent)
     self.position = position
 
@@ -78,10 +78,10 @@ class LocatedElement(Element):
 class BoundedElement(LocatedElement):
   """Base class for schematic with a position and a size"""
   def __init__(self,
-               id       : str | int | None = None,
-               parent   : Element   | None = None,
-               position : Vector2          = Vector2(0,0),
-               size     : Vector2          = Vector2(0,0)):
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = Vector2(0,0),
+               size     : Vector2        = Vector2(0,0)):
     LocatedElement.__init__(self, id, parent, position)
     self.size = size
 
