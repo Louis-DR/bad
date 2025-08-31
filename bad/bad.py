@@ -9,6 +9,7 @@
 
 
 from dataclasses import dataclass
+from typing import Self
 
 
 
@@ -42,15 +43,22 @@ class Vector2:
 
 class Element:
   """Base class for all schematic elements"""
-  def __init__(self, id=None, parent=None):
+  def __init__(self,
+               id     : str | int | None = None,
+               parent : Self      | None = None):
     self.id     = id
     self.parent = parent
+  def draw(self) -> str:
+    return ""
 
 
 
 class LocatedElement(Element):
   """Base class for schematic with a position"""
-  def __init__(self, id=None, parent=None, position=Vector2):
+  def __init__(self,
+               id       : str | int | None = None,
+               parent   : Element   | None = None,
+               position : Vector2          = Vector2(0,0)):
     Element.__init__(self, id, parent)
     self.position = position
 
@@ -69,7 +77,11 @@ class LocatedElement(Element):
 
 class BoundedElement(LocatedElement):
   """Base class for schematic with a position and a size"""
-  def __init__(self, id=None, parent=None, position=Vector2, size=Vector2):
+  def __init__(self,
+               id       : str | int | None = None,
+               parent   : Element   | None = None,
+               position : Vector2          = Vector2(0,0),
+               size     : Vector2          = Vector2(0,0)):
     LocatedElement.__init__(self, id, parent, position)
     self.size = size
 
