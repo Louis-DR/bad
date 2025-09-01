@@ -236,7 +236,27 @@ class Text(BoundedElement):
       for line in self.lines:
         svg += f'<text x="{line_position.x}" y="{line_position.y}" font-family="{self.style.font_family}" font-size="{self.style.font_size}" fill="{self.style.font_color}">{line}</text>\n'
         line_position.y += font_metrics.line_height
-
+    svg.strip('\n')
     return svg
 
+
+
+
+class Generator:
+  def __init__(self):
+    self.elements = {}
+    self.size     = Vector2(0,0)
+
+  def add(self, element:Element):
+    self.elements[element.id] = element
+    return self
+
+  def render(self):
+    svg_string  = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
+    svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
+    svg_string += '<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">'
+    for element in self.elements.values():
+      svg_string += element.draw() + '\n'
+    svg_string += '</svg>'
+    return svg_string
 
