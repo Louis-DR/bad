@@ -143,3 +143,36 @@ class Box(BoundedElement):
     return f'<rect x="{self.x}" y="{self.y}" width="{self.width}" height="{self.height}" rx="{self.style.corner_radius}" ry="{self.style.corner_radius}" fill="white" stroke="black"/>'
 
 
+
+from PIL import Image, ImageDraw, ImageFont
+font_path = "/System/Library/Fonts/Supplemental/Arial.ttf"
+def wrap_text_to_width(text:str, width:float, font_size:float=10):
+  """Split text into lines that fit within the specified width"""
+  font         = ImageFont.truetype(font_path, font_size)
+  dummy_image  = Image.new('RGB', (1, 1))
+  draw_context = ImageDraw.Draw(dummy_image)
+  words        = text.split(' ')
+  lines        = []
+  current_line = ""
+  # Iterate over words
+  for word in words:
+    # Test line with word added
+    if current_line:
+      test_line = current_line + " " + word
+    else:
+      test_line = word
+    # Measure width of test line
+    test_width = draw_context.textlength(text=test_line, font=font)
+    # If width is within bounds, continue to next word
+    if test_width <= width:
+      current_line = test_line
+    # Else create a new line
+    else:
+      if current_line:
+        lines.append(current_line)
+      current_line = word
+  # Push the last line
+  if current_line:
+    lines.append(current_line)
+  return lines
+
