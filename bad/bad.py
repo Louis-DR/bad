@@ -48,8 +48,8 @@ class Element:
                parent : Self | None = None):
     self.id     = id
     self.parent = parent
-  def draw(self) -> str:
-    return ""
+  def update(self): pass
+  def draw(self) -> str: return ""
 
 
 
@@ -188,5 +188,48 @@ def get_font_metrics(font_size:float=10) -> FontMetrics:
   line_height = ascent + descent
   font_metrics = FontMetrics(ascent, descent, line_height)
   return font_metrics
+
+
+
+
+
+@dataclass
+class TextStyle(ElementStyle):
+  font_family: str   = "Arial"
+  font_style:  str   = "regular"
+  font_size:   int   = 10
+  font_color:  str   = "black"
+
+class Text(BoundedElement):
+  """Text region within a rectangle"""
+  def __init__(self,
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               text     : str            = "",
+               position : Vector2        = Vector2(0,0),
+               size     : Vector2        = Vector2(0,0),
+               style    : TextStyle      = TextStyle()):
+    BoundedElement.__init__(self, id, parent, position, size)
+    self.style = style
+    self.text  = text
+    self.lines = []
+
+  def update(self):
+    """Update text lines and recalculate size if needed"""
+    self.lines = split_text_to_width(self.text, self.width, self.style.font_size)
+
+  def draw(self):
+    """Generate SVG for the text element"""
+    self.update()
+    font_metrics = get_font_metrics(self.style.font_size)
+    svg = ""
+    if self.lines:
+      line_position    = self.absolute_position()
+      line_position.y += font_metrics.ascent
+      for line in self.lines:
+        svg += f'<text x="{line_position.x}" y="{line_position.y}" font-family="{self.style.font_family}" font-size="{self.style.font_size}" fill="{self.style.font_color}">{line}</text>\n'
+        line_position.y += font_metrics.line_height
+
+    return svg
 
 
