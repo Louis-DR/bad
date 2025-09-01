@@ -54,7 +54,7 @@ class Element:
 
 
 class LocatedElement(Element):
-  """Base class for schematic with a position"""
+  """Base class for element with a position"""
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
@@ -76,7 +76,7 @@ class LocatedElement(Element):
 
 
 class BoundedElement(LocatedElement):
-  """Base class for schematic with a position and a size"""
+  """Base class for element with a position and a size"""
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
@@ -117,4 +117,29 @@ class ContainerElement(BoundedElement):
 @dataclass
 class ElementStyle:
   pass
+
+
+
+@dataclass
+class BoxStyle(ElementStyle):
+  background_color: str   = "white"
+  stroke_width:     float = 1
+  stroke_color:     str   = "black"
+  corner_radius:    float = 0
+  padding:          float = 10
+
+class Box(BoundedElement):
+  """Rectangle element with styling and anchors"""
+  def __init__(self,
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = Vector2(0,0),
+               size     : Vector2        = Vector2(0,0),
+               style    : BoxStyle       = BoxStyle()):
+    BoundedElement.__init__(self, id, parent, position, size)
+    self.style = style
+
+  def draw(self):
+    return f'<rect x="{self.x}" y="{self.y}" width="{self.width}" height="{self.height}" rx="{self.style.corner_radius}" ry="{self.style.corner_radius}" fill="white" stroke="black"/>'
+
 
