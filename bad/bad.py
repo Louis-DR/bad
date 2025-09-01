@@ -146,6 +146,7 @@ class Box(BoundedElement):
 
 from PIL import Image, ImageDraw, ImageFont
 font_path = "/System/Library/Fonts/Supplemental/Arial.ttf"
+pil_text_width_rectifier = 1.1
 def split_text_to_width(text:str, width:float, font_size:float=10):
   """Split text into lines that fit within the specified width"""
   font         = ImageFont.truetype(font_path, font_size)
@@ -162,7 +163,8 @@ def split_text_to_width(text:str, width:float, font_size:float=10):
     else:
       test_line = word
     # Measure width of test line
-    test_width = draw_context.textlength(text=test_line, font=font)
+    test_width  = draw_context.textlength(text=test_line, font=font)
+    test_width *= pil_text_width_rectifier
     # If width is within bounds, continue to next word
     if test_width <= width:
       current_line = test_line
