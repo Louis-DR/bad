@@ -146,7 +146,7 @@ class Box(BoundedElement):
 
 from PIL import Image, ImageDraw, ImageFont
 font_path = "/System/Library/Fonts/Supplemental/Arial.ttf"
-def wrap_text_to_width(text:str, width:float, font_size:float=10):
+def split_text_to_width(text:str, width:float, font_size:float=10):
   """Split text into lines that fit within the specified width"""
   font         = ImageFont.truetype(font_path, font_size)
   dummy_image  = Image.new('RGB', (1, 1))
@@ -175,4 +175,18 @@ def wrap_text_to_width(text:str, width:float, font_size:float=10):
   if current_line:
     lines.append(current_line)
   return lines
+
+@dataclass
+class FontMetrics:
+  ascent:      float
+  descent:     float
+  line_height: float
+
+def get_font_metrics(font_size:float=10) -> FontMetrics:
+  font = ImageFont.truetype(font_path, font_size)
+  ascent, descent = font.getmetrics()
+  line_height = ascent + descent
+  font_metrics = FontMetrics(ascent, descent, line_height)
+  return font_metrics
+
 
