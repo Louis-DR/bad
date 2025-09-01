@@ -99,3 +99,22 @@ class BoundedElement(LocatedElement):
 
   @property
   def center(self): return self.position + self.size / 2
+
+
+
+class ContainerElement(BoundedElement):
+  """Base class for bounded element with children"""
+  def __init__(self,
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = Vector2(0,0),
+               size     : Vector2        = Vector2(0,0)):
+    BoundedElement.__init__(self, id, parent, position, size)
+    self.children = []
+
+
+
+@dataclass
+class ElementStyle:
+  pass
+
