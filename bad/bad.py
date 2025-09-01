@@ -111,6 +111,9 @@ class ContainerElement(BoundedElement):
                size     : Vector2        = Vector2(0,0)):
     BoundedElement.__init__(self, id, parent, position, size)
     self.children = []
+  def update(self):
+    for child in self.children:
+      child.update()
 
 
 
@@ -150,7 +153,7 @@ pil_text_width_rectifier = 1.1
 def split_text_to_width(text:str, width:float, font_size:float=10):
   """Split text into lines that fit within the specified width"""
   font         = ImageFont.truetype(font_path, font_size)
-  dummy_image  = Image.new('RGB', (1, 1))
+  dummy_image  = Image.new('RGB', (1,1))
   draw_context = ImageDraw.Draw(dummy_image)
   words        = text.split(' ')
   lines        = []
@@ -219,6 +222,8 @@ class Text(BoundedElement):
   def update(self):
     """Update text lines and recalculate size if needed"""
     self.lines = split_text_to_width(self.text, self.width, self.style.font_size)
+    font_metrics = get_font_metrics(self.style.font_size)
+    self.height = (len(self.lines) + 1) * font_metrics.line_height
 
   def draw(self):
     """Generate SVG for the text element"""
