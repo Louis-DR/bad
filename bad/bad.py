@@ -58,9 +58,9 @@ class LocatedElement(Element):
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
-               position : Vector2        = Vector2(0,0)):
+               position : Vector2        = None):
     Element.__init__(self, id, parent)
-    self.position = position
+    self.position = position or Vector2(0,0)
 
   @property
   def x(self): return self.position.x
@@ -80,10 +80,10 @@ class BoundedElement(LocatedElement):
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
-               position : Vector2        = Vector2(0,0),
-               size     : Vector2        = Vector2(0,0)):
+               position : Vector2        = None,
+               size     : Vector2        = None):
     LocatedElement.__init__(self, id, parent, position)
-    self.size = size
+    self.size = size or Vector2(0,0)
 
   @property
   def width(self): return self.size.x
@@ -107,8 +107,8 @@ class ContainerElement(BoundedElement):
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
-               position : Vector2        = Vector2(0,0),
-               size     : Vector2        = Vector2(0,0)):
+               position : Vector2        = None,
+               size     : Vector2        = None):
     BoundedElement.__init__(self, id, parent, position, size)
     self.children = []
   def update(self):
@@ -136,9 +136,9 @@ class Box(BoundedElement):
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
-               position : Vector2        = Vector2(0,0),
-               size     : Vector2        = Vector2(0,0),
-               style    : BoxStyle       = BoxStyle()):
+               position : Vector2        = None,
+               size     : Vector2        = None,
+               style    : BoxStyle       = None):
     BoundedElement.__init__(self, id, parent, position, size)
     self.style = style
 
@@ -200,10 +200,10 @@ def get_font_metrics(font_size:float=10) -> FontMetrics:
 
 @dataclass
 class TextStyle(ElementStyle):
-  font_family: str   = "Arial"
-  font_style:  str   = "regular"
-  font_size:   int   = 10
-  font_color:  str   = "black"
+  font_family: str = "Arial"
+  font_style:  str = "regular"
+  font_size:   int = 10
+  font_color:  str = "black"
 
 class Text(BoundedElement):
   """Text region within a rectangle"""
@@ -211,19 +211,19 @@ class Text(BoundedElement):
                id       : str     | None = None,
                parent   : Element | None = None,
                text     : str            = "",
-               position : Vector2        = Vector2(0,0),
-               size     : Vector2        = Vector2(0,0),
-               style    : TextStyle      = TextStyle()):
+               position : Vector2        = None,
+               size     : Vector2        = None,
+               style    : TextStyle      = None):
     BoundedElement.__init__(self, id, parent, position, size)
-    self.style = style
+    self.style = style or TextStyle()
     self.text  = text
     self.lines = []
 
   def update(self):
     """Update text lines and recalculate size if needed"""
-    self.lines = split_text_to_width(self.text, self.width, self.style.font_size)
+    self.lines   = split_text_to_width(self.text, self.width, self.style.font_size)
     font_metrics = get_font_metrics(self.style.font_size)
-    self.height = (len(self.lines) + 1) * font_metrics.line_height
+    self.height  = (len(self.lines) + 1) * font_metrics.line_height
 
   def draw(self):
     """Generate SVG for the text element"""
