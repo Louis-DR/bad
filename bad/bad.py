@@ -337,6 +337,34 @@ class VerticalLayout(Layout):
 
 
 
+class HorizontalLayout(Layout):
+  """Layout to display elements horizontally"""
+  def __init__(self,
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = None,
+               size     : Vector2        = None):
+    Layout.__init__(self, id, parent, position, size)
+
+  def update(self):
+    Layout.update(self)
+    max_child_height = self.height
+    child_x         = 0
+    current_gap     = self.style.padding
+    for child in self.children:
+      current_gap = max(current_gap, child.style.margin)
+      child_x += current_gap
+      child.position = Vector2(child_x, self.style.padding)
+      child_x += child.width
+      current_gap = max(self.style.gap, child.style.margin)
+      max_child_height = max(max_child_height, child.height)
+    current_gap = max(current_gap, self.style.padding)
+    child_x += current_gap
+    self.size.x = child_x
+    self.size.y = max_child_height + 2 * self.style.padding
+
+
+
 class Diagram:
   def __init__(self):
     self.size   = None
