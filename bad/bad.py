@@ -19,10 +19,16 @@ class Vector2:
   y: float
 
   def __add__(self, other):
-    return Vector2(self.x + other.x, self.y + other.y)
+    if isinstance(other, Vector2):
+      return Vector2(self.x + other.x, self.y + other.y)
+    else:
+      return Vector2(self.x + other, self.y + other)
 
   def __sub__(self, other):
-    return Vector2(self.x - other.x, self.y - other.y)
+    if isinstance(other, Vector2):
+      return Vector2(self.x - other.x, self.y - other.y)
+    else:
+      return Vector2(self.x - other, self.y - other)
 
   def __mul__(self, other):
     if isinstance(other, Vector2):
@@ -66,6 +72,7 @@ class ContainerElementStyle(BoundedElementStyle):
 
 @dataclass
 class LayoutStyle(BoundedElementStyle):
+  margin:  float = 0
   padding: float = 5
   gap:     float = 5
 
@@ -182,10 +189,10 @@ class ContainerElement(BoundedElement):
   def update(self):
     if self.layout is not None:
       self.layout.update()
-      self.size = Vector2.max(self.size, self.layout.size)
+      self.size = Vector2.max(self.size, self.layout.size) + 2 * self.layout.style.margin
     if self.child is not None:
       self.child.update()
-      self.size = Vector2.max(self.size, self.child.size)
+      self.size = Vector2.max(self.size, self.child.size) + 2 * self.child.style.margin
 
   def draw(self):
     svg = ''
