@@ -39,6 +39,9 @@ class Vector2:
   def __repr__(self):
     return f"[{self.x},{self.y}]"
 
+  def max(vector_1:Self, vector_2:Self) -> Self:
+    return Vector2(max(vector_1.x, vector_2.x), max(vector_1.y, vector_2.y))
+
 
 
 @dataclass
@@ -159,28 +162,38 @@ class Layout(BoundedElement):
 
 
 class ContainerElement(BoundedElement):
-  """Base class for bounded element that can have a layout to contain other elements"""
+  """Base class for bounded element that can have a single child element or a layout to contain other elements"""
   def __init__(self,
                id       : str | None = None,
                position : Vector2    = None,
                size     : Vector2    = None):
     BoundedElement.__init__(self, id, position, size)
     self.layout = None
+    self.child  = None
 
   def set_layout(self, layout:Layout):
     layout.set_parent(self)
     self.layout = layout
 
+  def set_child(self, element:Element):
+    element.set_parent(self)
+    self.child = element
+
   def update(self):
     if self.layout is not None:
       self.layout.update()
-      self.size = self.layout.size
+      self.size = Vector2.max(self.size, self.layout.size)
+    if self.child is not None:
+      self.child.update()
+      self.size = Vector2.max(self.size, self.child.size)
 
   def draw(self):
+    svg = ''
     if self.layout is not None:
-      return '\n' + self.layout.draw()
-    else:
-      return ''
+      svg += '\n' + self.layout.draw()
+    if self.child is not None:
+      svg += '\n' + self.child.draw()
+    return svg
 
 
 
@@ -255,8 +268,6 @@ def get_font_metrics(font_size:float=10) -> FontMetrics:
   line_height     = ascent + descent
   font_metrics    = FontMetrics(ascent, descent, line_height)
   return font_metrics
-
-
 
 
 
