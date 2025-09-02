@@ -41,6 +41,33 @@ class Vector2:
 
 
 
+@dataclass
+class Style:
+  pass
+
+@dataclass
+class ElementStyle(Style):
+  pass
+
+@dataclass
+class LocatedElementStyle(ElementStyle):
+  margin: float = 5
+
+@dataclass
+class BoundedElementStyle(LocatedElementStyle):
+  pass
+
+@dataclass
+class ContainerElementStyle(BoundedElementStyle):
+  pass
+
+@dataclass
+class LayoutStyle(BoundedElementStyle):
+  padding: float = 5
+  gap:     float = 5
+
+
+
 class Element:
   """Base class for all schematic elements"""
   def __init__(self,
@@ -102,36 +129,70 @@ class BoundedElement(LocatedElement):
 
 
 
+class Layout(BoundedElement):
+  """Base class for layouts"""
+  def __init__(self,
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = None,
+               size     : Vector2        = None,
+               style    : LayoutStyle    = LayoutStyle()):
+    ContainerElement.__init__(self, id, parent, position, size)
+    self.style = style or LayoutStyle()
+    self.children = []
+
+  def add(self, element:Element):
+    self.children.append(element)
+
+  def update(self):
+    for child in self.children:
+      child.update()
+
+  def draw(self):
+    svg = f'<g id="{self.id}">'
+    for child in self.children:
+      svg += '\n'
+      svg += child.draw()
+    svg += '\n'
+    svg += '</g>'
+    return svg
+
+
+
 class ContainerElement(BoundedElement):
-  """Base class for bounded element with children"""
+  """Base class for bounded element that can have a layout to contain other elements"""
   def __init__(self,
                id       : str     | None = None,
                parent   : Element | None = None,
                position : Vector2        = None,
                size     : Vector2        = None):
     BoundedElement.__init__(self, id, parent, position, size)
-    self.children = []
+    self.layout = None
+
+  def set_layout(self, layout:Layout):
+    self.layout = layout
+
   def update(self):
-    for child in self.children:
-      child.update()
+    if self.layout is not None:
+      self.layout.update()
+      self.size = self.layout.size
+
+  def draw(self):
+    if self.layout is not None:
+      return '\n' + self.layout.draw()
+    else:
+      return ''
 
 
 
 @dataclass
-class ElementStyle:
-  pass
-
-
-
-@dataclass
-class BoxStyle(ElementStyle):
+class BoxStyle(ContainerElementStyle):
   background_color: str   = "white"
   stroke_width:     float = 1
   stroke_color:     str   = "black"
   corner_radius:    float = 0
-  padding:          float = 10
 
-class Box(BoundedElement):
+class Box(ContainerElement):
   """Rectangle element with styling and anchors"""
   def __init__(self,
                id       : str     | None = None,
@@ -139,11 +200,14 @@ class Box(BoundedElement):
                position : Vector2        = None,
                size     : Vector2        = None,
                style    : BoxStyle       = None):
-    BoundedElement.__init__(self, id, parent, position, size)
-    self.style = style
+    ContainerElement.__init__(self, id, parent, position, size)
+    self.style  = style or BoxStyle()
 
   def draw(self):
-    return f'<rect x="{self.x}" y="{self.y}" width="{self.width}" height="{self.height}" rx="{self.style.corner_radius}" ry="{self.style.corner_radius}" fill="white" stroke="black"/>'
+    absolute_position = self.absolute_position()
+    svg  = f'<rect id="{self.id}" x="{absolute_position.x}" y="{absolute_position.y}" width="{self.width}" height="{self.height}" rx="{self.style.corner_radius}" ry="{self.style.corner_radius}" fill="white" stroke="black"/>'
+    svg += ContainerElement.draw(self)
+    return svg
 
 
 
@@ -188,10 +252,10 @@ class FontMetrics:
   line_height: float
 
 def get_font_metrics(font_size:float=10) -> FontMetrics:
-  font = ImageFont.truetype(font_path, font_size)
+  font            = ImageFont.truetype(font_path, font_size)
   ascent, descent = font.getmetrics()
-  line_height = ascent + descent
-  font_metrics = FontMetrics(ascent, descent, line_height)
+  line_height     = ascent + descent
+  font_metrics    = FontMetrics(ascent, descent, line_height)
   return font_metrics
 
 
@@ -199,7 +263,7 @@ def get_font_metrics(font_size:float=10) -> FontMetrics:
 
 
 @dataclass
-class TextStyle(ElementStyle):
+class TextStyle(BoundedElementStyle):
   font_family: str = "Arial"
   font_style:  str = "regular"
   font_size:   int = 10
@@ -229,34 +293,64 @@ class Text(BoundedElement):
     """Generate SVG for the text element"""
     self.update()
     font_metrics = get_font_metrics(self.style.font_size)
-    svg = ""
+    svg = '<g>'
     if self.lines:
-      line_position    = self.absolute_position()
+      line_position = self.absolute_position()
       line_position.y += font_metrics.ascent
       for line in self.lines:
+        svg += '\n'
         svg += f'<text x="{line_position.x}" y="{line_position.y}" font-family="{self.style.font_family}" font-size="{self.style.font_size}" fill="{self.style.font_color}">{line}</text>\n'
         line_position.y += font_metrics.line_height
-    svg.strip('\n')
+    svg += '\n'
+    svg += '</g>'
     return svg
 
 
 
 
-class Generator:
-  def __init__(self):
-    self.elements = {}
-    self.size     = Vector2(0,0)
 
-  def add(self, element:Element):
-    self.elements[element.id] = element
-    return self
+class VerticalLayout(Layout):
+  """Layout to display elements vertically"""
+  def __init__(self,
+               id       : str     | None = None,
+               parent   : Element | None = None,
+               position : Vector2        = None,
+               size     : Vector2        = None):
+    Layout.__init__(self, id, parent, position, size)
+
+  def update(self):
+    Layout.update(self)
+    max_child_width = self.width
+    child_y         = 0
+    current_gap     = self.style.padding
+    for child in self.children:
+      current_gap = max(current_gap, child.style.margin)
+      child_y += current_gap
+      child.position = Vector2(self.style.padding, child_y)
+      child_y += child.height
+      current_gap = max(self.style.gap, child.style.margin)
+      max_child_width = max(max_child_width, child.width)
+    current_gap = max(current_gap, self.style.padding)
+    child_y += current_gap
+    self.size.x = max_child_width + 2 * self.style.padding
+    self.size.y = child_y
+
+
+
+class Diagram:
+  def __init__(self):
+    self.size   = None
+    self.layout = None
+
+  def update(self):
+    self.layout.update()
+    self.size = self.layout.size
 
   def render(self):
-    svg_string  = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
-    svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
-    svg_string += '<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">'
-    for element in self.elements.values():
-      svg_string += element.draw() + '\n'
+    svg_string  = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+    svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+    svg_string += '<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
+    svg_string += self.layout.draw() + '\n'
     svg_string += '</svg>'
     return svg_string
 
