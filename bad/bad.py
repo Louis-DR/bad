@@ -15,8 +15,8 @@ from typing import Self
 
 @dataclass
 class Vector2:
-  x: float
-  y: float
+  x: float = 0
+  y: float = 0
 
   def __add__(self, other):
     if isinstance(other, Vector2):
@@ -47,6 +47,12 @@ class Vector2:
 
   def max(vector_1:Self, vector_2:Self) -> Self:
     return Vector2(max(vector_1.x, vector_2.x), max(vector_1.y, vector_2.y))
+
+
+
+@dataclass
+class Position(Vector2):
+  automatic: bool = True
 
 
 
@@ -101,9 +107,9 @@ class LocatedElement(Element):
   """Base class for element with a position"""
   def __init__(self,
                id       : str | None = None,
-               position : Vector2    = None):
+               position : Position   = None):
     Element.__init__(self, id)
-    self.position = position or Vector2(0,0)
+    self.position = position or Position()
 
   @property
   def x(self): return self.position.x
@@ -148,7 +154,7 @@ class Layout(BoundedElement):
   """Base class for layouts"""
   def __init__(self,
                id       : str | None  = None,
-               position : Vector2     = None,
+               position : Position    = None,
                size     : Vector2     = None,
                style    : LayoutStyle = LayoutStyle()):
     ContainerElement.__init__(self, id, position, size)
@@ -178,7 +184,7 @@ class ContainerElement(BoundedElement):
   """Base class for bounded element that can have a single child element or a layout to contain other elements"""
   def __init__(self,
                id       : str | None = None,
-               position : Vector2    = None,
+               position : Position   = None,
                size     : Vector2    = None):
     BoundedElement.__init__(self, id, position, size)
     self.layout = None
@@ -221,7 +227,7 @@ class Box(ContainerElement):
   """Rectangle element with styling and anchors"""
   def __init__(self,
                id       : str | None = None,
-               position : Vector2    = None,
+               position : Position   = None,
                size     : Vector2    = None,
                style    : BoxStyle   = None):
     ContainerElement.__init__(self, id, position, size)
@@ -296,7 +302,7 @@ class Text(BoundedElement):
   def __init__(self,
                id       : str | None = None,
                text     : str        = "",
-               position : Vector2    = None,
+               position : Position   = None,
                size     : Vector2    = None,
                style    : TextStyle  = None):
     BoundedElement.__init__(self, id, position, size)
@@ -334,7 +340,7 @@ class VerticalLayout(Layout):
   """Layout to display elements vertically"""
   def __init__(self,
                id       : str | None = None,
-               position : Vector2    = None,
+               position : Position   = None,
                size     : Vector2    = None):
     Layout.__init__(self, id, position, size)
 
@@ -344,14 +350,15 @@ class VerticalLayout(Layout):
     current_gap = self.style.padding
     child_y     = 0
     for child in self.children:
-      current_gap    = max(current_gap, child.style.margin)
-      child_y       += current_gap
-      child_x_margin = max(child.style.margin, self.style.padding)
-      child_x        = child_x_margin
-      child.position = Vector2(child_x, child_y)
-      child_y       += child.height
-      current_gap    = max(self.style.gap, child.style.margin)
-      max_x_bound    = max(max_x_bound, child.width + 2 * child_x_margin)
+      if child.position.automatic:
+        current_gap    = max(current_gap, child.style.margin)
+        child_y       += current_gap
+        child_x_margin = max(child.style.margin, self.style.padding)
+        child_x        = child_x_margin
+        child.position = Position(child_x, child_y)
+        child_y       += child.height
+        current_gap    = max(self.style.gap, child.style.margin)
+        max_x_bound    = max(max_x_bound, child.width + 2 * child_x_margin)
     current_gap = max(current_gap, self.style.padding)
     child_y += current_gap
     self.size.x = max_x_bound
@@ -363,7 +370,7 @@ class HorizontalLayout(Layout):
   """Layout to display elements horizontally"""
   def __init__(self,
                id       : str | None = None,
-               position : Vector2    = None,
+               position : Position   = None,
                size     : Vector2    = None):
     Layout.__init__(self, id, position, size)
 
@@ -373,14 +380,15 @@ class HorizontalLayout(Layout):
     current_gap = self.style.padding
     child_x     = 0
     for child in self.children:
-      current_gap    = max(current_gap, child.style.margin)
-      child_x       += current_gap
-      child_y_margin = max(child.style.margin, self.style.padding)
-      child_y        = child_y_margin
-      child.position = Vector2(child_x, child_y)
-      child_x       += child.width
-      current_gap    = max(self.style.gap, child.style.margin)
-      max_y_bound    = max(max_y_bound, child.height + 2 * child_y_margin)
+      if child.position.automatic:
+        current_gap    = max(current_gap, child.style.margin)
+        child_x       += current_gap
+        child_y_margin = max(child.style.margin, self.style.padding)
+        child_y        = child_y_margin
+        child.position = Position(child_x, child_y)
+        child_x       += child.width
+        current_gap    = max(self.style.gap, child.style.margin)
+        max_y_bound    = max(max_y_bound, child.height + 2 * child_y_margin)
     current_gap = max(current_gap, self.style.padding)
     child_x += current_gap
     self.size.x = child_x
