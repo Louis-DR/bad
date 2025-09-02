@@ -71,9 +71,10 @@ class LayoutStyle(BoundedElementStyle):
 class Element:
   """Base class for all schematic elements"""
   def __init__(self,
-               id     : str  | None = None,
-               parent : Self | None = None):
+               id : str | None = None):
     self.id     = id
+    self.parent = None
+  def set_parent(self, parent:Self):
     self.parent = parent
   def update(self): pass
   def draw(self) -> str: return ""
@@ -83,10 +84,9 @@ class Element:
 class LocatedElement(Element):
   """Base class for element with a position"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None):
-    Element.__init__(self, id, parent)
+               id       : str | None = None,
+               position : Vector2    = None):
+    Element.__init__(self, id)
     self.position = position or Vector2(0,0)
 
   @property
@@ -105,11 +105,10 @@ class LocatedElement(Element):
 class BoundedElement(LocatedElement):
   """Base class for element with a position and a size"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None,
-               size     : Vector2        = None):
-    LocatedElement.__init__(self, id, parent, position)
+               id       : str | None = None,
+               position : Vector2    = None,
+               size     : Vector2    = None):
+    LocatedElement.__init__(self, id, position)
     self.size = size or Vector2(0,0)
 
   @property
@@ -132,16 +131,16 @@ class BoundedElement(LocatedElement):
 class Layout(BoundedElement):
   """Base class for layouts"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None,
-               size     : Vector2        = None,
-               style    : LayoutStyle    = LayoutStyle()):
-    ContainerElement.__init__(self, id, parent, position, size)
+               id       : str | None  = None,
+               position : Vector2     = None,
+               size     : Vector2     = None,
+               style    : LayoutStyle = LayoutStyle()):
+    ContainerElement.__init__(self, id, position, size)
     self.style = style or LayoutStyle()
     self.children = []
 
   def add(self, element:Element):
+    element.set_parent(self)
     self.children.append(element)
 
   def update(self):
@@ -162,14 +161,14 @@ class Layout(BoundedElement):
 class ContainerElement(BoundedElement):
   """Base class for bounded element that can have a layout to contain other elements"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None,
-               size     : Vector2        = None):
-    BoundedElement.__init__(self, id, parent, position, size)
+               id       : str | None = None,
+               position : Vector2    = None,
+               size     : Vector2    = None):
+    BoundedElement.__init__(self, id, position, size)
     self.layout = None
 
   def set_layout(self, layout:Layout):
+    layout.set_parent(self)
     self.layout = layout
 
   def update(self):
@@ -195,12 +194,11 @@ class BoxStyle(ContainerElementStyle):
 class Box(ContainerElement):
   """Rectangle element with styling and anchors"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None,
-               size     : Vector2        = None,
-               style    : BoxStyle       = None):
-    ContainerElement.__init__(self, id, parent, position, size)
+               id       : str | None = None,
+               position : Vector2    = None,
+               size     : Vector2    = None,
+               style    : BoxStyle   = None):
+    ContainerElement.__init__(self, id, position, size)
     self.style  = style or BoxStyle()
 
   def draw(self):
@@ -272,13 +270,12 @@ class TextStyle(BoundedElementStyle):
 class Text(BoundedElement):
   """Text region within a rectangle"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               text     : str            = "",
-               position : Vector2        = None,
-               size     : Vector2        = None,
-               style    : TextStyle      = None):
-    BoundedElement.__init__(self, id, parent, position, size)
+               id       : str | None = None,
+               text     : str        = "",
+               position : Vector2    = None,
+               size     : Vector2    = None,
+               style    : TextStyle  = None):
+    BoundedElement.__init__(self, id, position, size)
     self.style = style or TextStyle()
     self.text  = text
     self.lines = []
@@ -312,11 +309,10 @@ class Text(BoundedElement):
 class VerticalLayout(Layout):
   """Layout to display elements vertically"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None,
-               size     : Vector2        = None):
-    Layout.__init__(self, id, parent, position, size)
+               id       : str | None = None,
+               position : Vector2    = None,
+               size     : Vector2    = None):
+    Layout.__init__(self, id, position, size)
 
   def update(self):
     Layout.update(self)
@@ -340,11 +336,10 @@ class VerticalLayout(Layout):
 class HorizontalLayout(Layout):
   """Layout to display elements horizontally"""
   def __init__(self,
-               id       : str     | None = None,
-               parent   : Element | None = None,
-               position : Vector2        = None,
-               size     : Vector2        = None):
-    Layout.__init__(self, id, parent, position, size)
+               id       : str | None = None,
+               position : Vector2    = None,
+               size     : Vector2    = None):
+    Layout.__init__(self, id, position, size)
 
   def update(self):
     Layout.update(self)
@@ -369,6 +364,9 @@ class Diagram:
   def __init__(self):
     self.size   = None
     self.layout = None
+
+  def set_layout(self, layout:Layout):
+    self.layout = layout
 
   def update(self):
     self.layout.update()
