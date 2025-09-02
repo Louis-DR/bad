@@ -50,6 +50,12 @@ class Vector2:
 
 
 
+def indent(text:str, spaces:int=2):
+  indentation = spaces * ' '
+  return indentation + text.replace('\n', '\n'+indentation)
+
+
+
 @dataclass
 class Style:
   pass
@@ -161,7 +167,7 @@ class Layout(BoundedElement):
     svg = f'<g id="{self.id}">'
     for child in self.children:
       svg += '\n'
-      svg += child.draw()
+      svg += indent(child.draw())
     svg += '\n'
     svg += '</g>'
     return svg
@@ -197,9 +203,9 @@ class ContainerElement(BoundedElement):
   def draw(self):
     svg = ''
     if self.layout is not None:
-      svg += '\n' + self.layout.draw()
+      svg += '\n' + indent(self.layout.draw())
     if self.child is not None:
-      svg += '\n' + self.child.draw()
+      svg += '\n' + indent(self.child.draw())
     return svg
 
 
@@ -314,7 +320,7 @@ class Text(BoundedElement):
       line_position.y += font_metrics.ascent
       for line in self.lines:
         svg += '\n'
-        svg += f'<text x="{line_position.x}" y="{line_position.y}" font-family="{self.style.font_family}" font-size="{self.style.font_size}" fill="{self.style.font_color}">{line}</text>\n'
+        svg += f'  <text x="{line_position.x}" y="{line_position.y}" font-family="{self.style.font_family}" font-size="{self.style.font_size}" fill="{self.style.font_color}">{line}</text>'
         line_position.y += font_metrics.line_height
     svg += '\n'
     svg += '</g>'
