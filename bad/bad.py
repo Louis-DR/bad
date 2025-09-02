@@ -9,6 +9,7 @@
 
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Self
 
 
@@ -82,11 +83,17 @@ class BoundedElementStyle(LocatedElementStyle):
 class ContainerElementStyle(BoundedElementStyle):
   pass
 
+class LayoutAlignment(Enum):
+  START   = 0
+  CENTER  = 1
+  END     = 2
+
 @dataclass
 class LayoutStyle(BoundedElementStyle):
-  margin:  float = 0
-  padding: float = 5
-  gap:     float = 5
+  margin:    float           = 0
+  padding:   float           = 5
+  gap:       float           = 5
+  alignment: LayoutAlignment = LayoutAlignment.START
 
 
 
@@ -156,7 +163,7 @@ class Layout(BoundedElement):
                id       : str | None  = None,
                position : Position    = None,
                size     : Vector2     = None,
-               style    : LayoutStyle = LayoutStyle()):
+               style    : LayoutStyle = None):
     ContainerElement.__init__(self, id, position, size)
     self.style = style or LayoutStyle()
     self.children = []
@@ -322,7 +329,8 @@ class Text(BoundedElement):
     font_metrics = get_font_metrics(self.style.font_size)
     svg = '<g>'
     if self.lines:
-      line_position = self.absolute_position()
+      line_position    = self.absolute_position()
+      line_position   += self.style.margin
       line_position.y += font_metrics.ascent
       for line in self.lines:
         svg += '\n'
@@ -339,28 +347,49 @@ class Text(BoundedElement):
 class VerticalLayout(Layout):
   """Layout to display elements vertically"""
   def __init__(self,
-               id       : str | None = None,
-               position : Position   = None,
-               size     : Vector2    = None):
-    Layout.__init__(self, id, position, size)
+               id       : str | None  = None,
+               position : Position    = None,
+               size     : Vector2     = None,
+               style    : LayoutStyle = None):
+    Layout.__init__(self, id, position, size, style)
 
   def update(self):
     Layout.update(self)
+
+    # Compute horizontally
     max_x_bound = self.width
+    for child in self.children:
+      if child.position.automatic:
+        child_x_margin = max(child.style.margin, self.style.padding)
+        max_x_bound    = max(max_x_bound, child.width + 2 * child_x_margin)
+    self.size.x = max_x_bound
+
+    # Compute vertically
     current_gap = self.style.padding
     child_y     = 0
     for child in self.children:
       if child.position.automatic:
-        current_gap    = max(current_gap, child.style.margin)
-        child_y       += current_gap
-        child_x_margin = max(child.style.margin, self.style.padding)
-        child_x        = child_x_margin
-        child.position = Position(child_x, child_y)
-        child_y       += child.height
-        current_gap    = max(self.style.gap, child.style.margin)
-        max_x_bound    = max(max_x_bound, child.width + 2 * child_x_margin)
+        current_gap      = max(current_gap, child.style.margin)
+        child_y         += current_gap
+        child.position.y = child_y
+        child_y         += child.height
+        current_gap      = max(self.style.gap, child.style.margin)
     current_gap = max(current_gap, self.style.padding)
     child_y += current_gap
+
+    # Align horizontally
+    for child in self.children:
+      if child.position.automatic:
+        child_x_margin = max(child.style.margin, self.style.padding)
+        match self.style.alignment:
+          case LayoutAlignment.START:
+            child.position.x = child_x_margin
+          case LayoutAlignment.CENTER:
+            child.position.x = (self.width - child.width) / 2
+          case LayoutAlignment.END:
+            child.position.x = self.width - child_x_margin - child.width
+
+    # Update size
     self.size.x = max_x_bound
     self.size.y = child_y
 
@@ -369,28 +398,49 @@ class VerticalLayout(Layout):
 class HorizontalLayout(Layout):
   """Layout to display elements horizontally"""
   def __init__(self,
-               id       : str | None = None,
-               position : Position   = None,
-               size     : Vector2    = None):
-    Layout.__init__(self, id, position, size)
+               id       : str | None  = None,
+               position : Position    = None,
+               size     : Vector2     = None,
+               style    : LayoutStyle = None):
+    Layout.__init__(self, id, position, size, style)
 
   def update(self):
     Layout.update(self)
+
+    # Compute vertically
     max_y_bound = self.height
+    for child in self.children:
+      if child.position.automatic:
+        child_y_margin = max(child.style.margin, self.style.padding)
+        max_y_bound    = max(max_y_bound, child.height + 2 * child_y_margin)
+    self.size.y = max_y_bound
+
+    # Compute horizontally
     current_gap = self.style.padding
     child_x     = 0
     for child in self.children:
       if child.position.automatic:
-        current_gap    = max(current_gap, child.style.margin)
-        child_x       += current_gap
-        child_y_margin = max(child.style.margin, self.style.padding)
-        child_y        = child_y_margin
-        child.position = Position(child_x, child_y)
-        child_x       += child.width
-        current_gap    = max(self.style.gap, child.style.margin)
-        max_y_bound    = max(max_y_bound, child.height + 2 * child_y_margin)
+        current_gap      = max(current_gap, child.style.margin)
+        child_x         += current_gap
+        child.position.x = child_x
+        child_x         += child.width
+        current_gap      = max(self.style.gap, child.style.margin)
     current_gap = max(current_gap, self.style.padding)
     child_x += current_gap
+
+    # Align vertically
+    for child in self.children:
+      if child.position.automatic:
+        child_y_margin = max(child.style.margin, self.style.padding)
+        match self.style.alignment:
+          case LayoutAlignment.START:
+            child.position.y = child_y_margin
+          case LayoutAlignment.CENTER:
+            child.position.y = (self.height - child.height) / 2
+          case LayoutAlignment.END:
+            child.position.y = self.height - child_y_margin - child.height
+
+    # Update size
     self.size.x = child_x
     self.size.y = max_y_bound
 
