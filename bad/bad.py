@@ -340,19 +340,21 @@ class VerticalLayout(Layout):
 
   def update(self):
     Layout.update(self)
-    max_child_width = self.width
-    child_y         = 0
-    current_gap     = self.style.padding
+    max_x_bound = self.width
+    current_gap = self.style.padding
+    child_y     = 0
     for child in self.children:
-      current_gap = max(current_gap, child.style.margin)
-      child_y += current_gap
-      child.position = Vector2(self.style.padding, child_y)
-      child_y += child.height
-      current_gap = max(self.style.gap, child.style.margin)
-      max_child_width = max(max_child_width, child.width)
+      current_gap    = max(current_gap, child.style.margin)
+      child_y       += current_gap
+      child_x_margin = max(child.style.margin, self.style.padding)
+      child_x        = child_x_margin
+      child.position = Vector2(child_x, child_y)
+      child_y       += child.height
+      current_gap    = max(self.style.gap, child.style.margin)
+      max_x_bound    = max(max_x_bound, child.width + 2 * child_x_margin)
     current_gap = max(current_gap, self.style.padding)
     child_y += current_gap
-    self.size.x = max_child_width + 2 * self.style.padding
+    self.size.x = max_x_bound
     self.size.y = child_y
 
 
@@ -367,20 +369,22 @@ class HorizontalLayout(Layout):
 
   def update(self):
     Layout.update(self)
-    max_child_height = self.height
-    child_x         = 0
-    current_gap     = self.style.padding
+    max_y_bound = self.height
+    current_gap = self.style.padding
+    child_x     = 0
     for child in self.children:
-      current_gap = max(current_gap, child.style.margin)
-      child_x += current_gap
-      child.position = Vector2(child_x, self.style.padding)
-      child_x += child.width
-      current_gap = max(self.style.gap, child.style.margin)
-      max_child_height = max(max_child_height, child.height)
+      current_gap    = max(current_gap, child.style.margin)
+      child_x       += current_gap
+      child_y_margin = max(child.style.margin, self.style.padding)
+      child_y        = child_y_margin
+      child.position = Vector2(child_x, child_y)
+      child_x       += child.width
+      current_gap    = max(self.style.gap, child.style.margin)
+      max_y_bound    = max(max_y_bound, child.height + 2 * child_y_margin)
     current_gap = max(current_gap, self.style.padding)
     child_x += current_gap
     self.size.x = child_x
-    self.size.y = max_child_height + 2 * self.style.padding
+    self.size.y = max_y_bound
 
 
 
