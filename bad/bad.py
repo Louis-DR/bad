@@ -349,7 +349,7 @@ class Diagram:
   def render(self):
     svg_string  = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
     svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
-    svg_string += '<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
+    svg_string += f'<svg width="{self.size.x}" height="{self.size.y}" viewBox="0 0 {self.size.x} {self.size.y}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
     svg_string += self.layout.draw() + '\n'
     svg_string += '</svg>'
     return svg_string
