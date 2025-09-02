@@ -284,7 +284,7 @@ class Text(BoundedElement):
     """Update text lines and recalculate size if needed"""
     self.lines   = split_text_to_width(self.text, self.width, self.style.font_size)
     font_metrics = get_font_metrics(self.style.font_size)
-    self.height  = (len(self.lines) + 1) * font_metrics.line_height
+    self.size.y  = (len(self.lines) + 1) * font_metrics.line_height
 
   def draw(self):
     """Generate SVG for the text element"""
