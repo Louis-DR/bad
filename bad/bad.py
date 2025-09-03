@@ -163,7 +163,8 @@ class BoundedElement(LocatedElement):
                position : Vector2    = None,
                size     : Vector2    = None):
     LocatedElement.__init__(self, id, position)
-    self.size = size or Vector2(0,0)
+    self.size    = size or Vector2()
+    self.anchors = {}
 
   @property
   def width(self): return self.size.x
@@ -179,6 +180,17 @@ class BoundedElement(LocatedElement):
 
   @property
   def center(self): return self.position + self.size / 2
+
+  def add_anchor(self, name:str, anchor:Anchor):
+    anchor.set_parent(self)
+    self.anchors[name] = anchor
+
+  def update(self):
+    LocatedElement.update(self)
+    for anchor in self.anchors.values():
+      anchor.update()
+      if isinstance(anchor, RelativeAnchor):
+        anchor.position = anchor.reference * self.size + anchor.offset
 
 
 
@@ -231,6 +243,7 @@ class ContainerElement(BoundedElement):
     self.child = element
 
   def update(self):
+    BoundedElement.update(self)
     if self.layout is not None:
       self.layout.update()
       self.size = Vector2.max(self.size, self.layout.size) + 2 * self.layout.style.margin
@@ -263,7 +276,15 @@ class Box(ContainerElement):
                size     : Vector2    = None,
                style    : BoxStyle   = None):
     ContainerElement.__init__(self, id, position, size)
-    self.style  = style or BoxStyle()
+    self.style = style or BoxStyle()
+    self.add_anchor("top_left",      RelativeAnchor(direction=AnchorDirection.NONE,       reference=Vector2(0.0,0.0)))
+    self.add_anchor("top_center",    RelativeAnchor(direction=AnchorDirection.VERTICAL,   reference=Vector2(0.5,0.0)))
+    self.add_anchor("top_right",     RelativeAnchor(direction=AnchorDirection.NONE,       reference=Vector2(1.0,0.0)))
+    self.add_anchor("center_left",   RelativeAnchor(direction=AnchorDirection.HORIZONTAL, reference=Vector2(0.0,0.5)))
+    self.add_anchor("center_right",  RelativeAnchor(direction=AnchorDirection.HORIZONTAL, reference=Vector2(1.0,0.5)))
+    self.add_anchor("bottom_left",   RelativeAnchor(direction=AnchorDirection.NONE,       reference=Vector2(0.0,1.0)))
+    self.add_anchor("bottom_center", RelativeAnchor(direction=AnchorDirection.VERTICAL,   reference=Vector2(0.5,1.0)))
+    self.add_anchor("bottom_right",  RelativeAnchor(direction=AnchorDirection.NONE,       reference=Vector2(1.0,1.0)))
 
   def draw(self):
     absolute_position = self.absolute_position()
