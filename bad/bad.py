@@ -492,23 +492,90 @@ class HorizontalLayout(Layout):
 
 
 
+@dataclass
+class LinkStyle(Style):
+  margin:       float = 5
+  stroke_width: float = 1
+  stroke_color: str   = "red"
+
+class Link(Element):
+  def __init__(self,
+               id    : str | None = None,
+               start : Anchor     = None,
+               end   : Anchor     = None,
+               style : LinkStyle  = None):
+    Element.__init__(self, id)
+    self.start    = start
+    self.end      = end
+    self.style    = style or LinkStyle()
+    self.points   = []
+    self.position = Vector2()
+
+  def update(self):
+    if self.start is None or self.end is None:
+      return
+    start_absolute_position = self.start.absolute_position()
+    end_absolute_position   = self.end.absolute_position()
+    self.points = []
+    self.points.append(start_absolute_position)
+    if self.start.direction == self.end.direction:
+      if self.start.direction == AnchorDirection.HORIZONTAL:
+        if start_absolute_position.y == end_absolute_position.y:
+          pass
+        else:
+          mid_point_x = (start_absolute_position.x + end_absolute_position.x) / 2
+          self.points.append(Vector2(mid_point_x, start_absolute_position.y))
+          self.points.append(Vector2(mid_point_x, end_absolute_position.y))
+      else:
+        if start_absolute_position.x == end_absolute_position.x:
+          pass
+        else:
+          mid_point_y = (start_absolute_position.y + end_absolute_position.y) / 2
+          self.points.append(Vector2(start_absolute_position.y, mid_point_y))
+          self.points.append(Vector2(end_absolute_position.y,   mid_point_y))
+    else:
+      if self.start.direction == AnchorDirection.HORIZONTAL:
+        self.points.append(Vector2(end_absolute_position.x, start_absolute_position.y))
+      else:
+        self.points.append(Vector2(start_absolute_position.x, end_absolute_position.y))
+    self.points.append(end_absolute_position)
+
+  def draw(self):
+    svg = '<polyline points="'
+    for point in self.points:
+      point_absolute_position = point + self.position
+      svg += f'{point_absolute_position.x},{point_absolute_position.y} '
+    svg  = svg.rstrip()
+    svg += f'" style="stroke-width:{self.style.stroke_width}; stroke:{self.style.stroke_color}; fill:none;"/>'
+    return svg
+
+
+
 class Diagram:
   def __init__(self):
     self.size   = None
     self.layout = None
+    self.links  = []
 
   def set_layout(self, layout:Layout):
     self.layout = layout
 
+  def add_link(self, link:Link):
+    self.links.append(link)
+
   def update(self):
     self.layout.update()
     self.size = self.layout.size
+    for link in self.links:
+      link.update()
 
   def render(self):
     svg_string  = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
     svg_string += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
     svg_string += f'<svg width="{self.size.x}" height="{self.size.y}" viewBox="0 0 {self.size.x} {self.size.y}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
     svg_string += self.layout.draw() + '\n'
+    for link in self.links:
+      svg_string += link.draw() + '\n'
     svg_string += '</svg>'
     return svg_string
 
