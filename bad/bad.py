@@ -131,6 +131,31 @@ class LocatedElement(Element):
 
 
 
+class AnchorDirection(Enum):
+  NONE       = 0
+  VERTICAL   = 1
+  HORIZONTAL = 2
+
+class Anchor(LocatedElement):
+  def __init__(self,
+               id        : str | None      = None,
+               position  : Position        = None,
+               direction : AnchorDirection = None):
+    LocatedElement.__init__(self, id, position)
+    self.direction = direction or AnchorDirection.NONE
+
+class RelativeAnchor(Anchor):
+  def __init__(self,
+               id        : str | None      = None,
+               direction : AnchorDirection = None,
+               reference : Vector2         = None,
+               offset    : Vector2         = None):
+    Anchor.__init__(self, id, direction=direction)
+    self.reference = reference or Vector2()
+    self.offset    = offset    or Vector2()
+
+
+
 class BoundedElement(LocatedElement):
   """Base class for element with a position and a size"""
   def __init__(self,
