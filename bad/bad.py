@@ -210,6 +210,7 @@ class Layout(BoundedElement):
     self.children.append(element)
 
   def update(self):
+    BoundedElement.update(self)
     for child in self.children:
       child.update()
 
@@ -365,13 +366,13 @@ class Text(BoundedElement):
 
   def update(self):
     """Update text lines and recalculate size if needed"""
+    BoundedElement.update(self)
     self.lines   = split_text_to_width(self.text, self.width, self.style.font_size)
     font_metrics = get_font_metrics(self.style.font_size)
     self.size.y  = (len(self.lines) + 1) * font_metrics.line_height
 
   def draw(self):
     """Generate SVG for the text element"""
-    self.update()
     font_metrics = get_font_metrics(self.style.font_size)
     svg = '<g>'
     if self.lines:
@@ -512,6 +513,7 @@ class Link(Element):
     self.position = Vector2()
 
   def update(self):
+    Element.update(self)
     if self.start is None or self.end is None:
       return
     start_absolute_position = self.start.absolute_position()
@@ -564,6 +566,7 @@ class Diagram:
     self.links.append(link)
 
   def update(self):
+    self.layout.update()
     self.layout.update()
     self.size = self.layout.size
     for link in self.links:
